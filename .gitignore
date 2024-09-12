@@ -1,0 +1,32 @@
+# Ignore .idea folder (JetBrains IDEs)
+.idea/
+
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Directories created by the "go get" command
+/vendor/
+
+# Dependency directories (remove the comment below if you use Go modules)
+# /vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Exclude Go build cache
+/go/pkg/
+
+# IDE-specific ignores
+# Visual Studio Code
+.vscode/
+.history/
