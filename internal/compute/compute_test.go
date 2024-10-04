@@ -38,7 +38,7 @@ func TestParser_Parse(t *testing.T) {
 }
 
 func TestComputeLayer_Execute(t *testing.T) {
-	log, _ := logger.NewLogger()
+	log, _ := logger.NewLogger("info", "stdout")
 	parser := NewParser()
 	engine := storage.NewInMemoryEngine()
 	compute := NewComputeLayer(parser, engine, log)
@@ -97,7 +97,7 @@ func TestInMemoryEngine(t *testing.T) {
 }
 
 func BenchmarkSet(b *testing.B) {
-	log, _ := logger.NewLogger()
+	log, _ := logger.NewLogger("info", "stdout")
 	parser := NewParser()
 	engine := storage.NewInMemoryEngine()
 	compute := NewComputeLayer(parser, engine, log)
@@ -109,7 +109,7 @@ func BenchmarkSet(b *testing.B) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	log, _ := logger.NewLogger()
+	log, _ := logger.NewLogger("info", "stdout")
 	parser := NewParser()
 	engine := storage.NewInMemoryEngine()
 	compute := NewComputeLayer(parser, engine, log)
@@ -123,7 +123,7 @@ func BenchmarkGet(b *testing.B) {
 }
 
 func BenchmarkDel(b *testing.B) {
-	log, _ := logger.NewLogger()
+	log, _ := logger.NewLogger("info", "stdout")
 	parser := NewParser()
 	engine := storage.NewInMemoryEngine()
 	compute := NewComputeLayer(parser, engine, log)
