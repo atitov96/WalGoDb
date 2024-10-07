@@ -4,6 +4,8 @@ import (
 	"atitov96/walgodb/internal/storage"
 	"errors"
 	"go.uber.org/zap"
+	"sync/atomic"
+	"time"
 )
 
 type Command struct {
@@ -15,14 +17,23 @@ type Parser interface {
 	Parse(expression string) (Command, error)
 }
 
+type Metrics struct {
+	TotalQueries   uint64
+	SuccessQueries uint64
+	FailedQueries  uint64
+	AverageLatency time.Duration
+}
+
 type Compute interface {
 	Execute(expression string) (string, error)
+	GetMetrics() Metrics
 }
 
 type computeLayer struct {
 	parser  Parser
 	storage storage.Storage
 	log     *zap.Logger
+	metrics Metrics
 }
 
 func NewComputeLayer(p Parser, s storage.Storage, l *zap.Logger) Compute {
@@ -34,24 +45,44 @@ func NewComputeLayer(p Parser, s storage.Storage, l *zap.Logger) Compute {
 }
 
 func (c *computeLayer) Execute(expression string) (string, error) {
+	start := time.Now()
+	atomic.AddUint64(&c.metrics.TotalQueries, 1)
+
 	command, err := c.parser.Parse(expression)
 	if err != nil {
 		c.log.Error("failed to parse expression", zap.Error(err))
+		atomic.AddUint64(&c.metrics.FailedQueries, 1)
 		return "", err
 	}
 
 	c.log.Info("executing command", zap.String("command type", command.Type), zap.Strings("command args", command.Args))
 
+	var result string
 	switch command.Type {
 	case "SET":
-		return c.handleSet(command.Args)
+		result, err = c.handleSet(command.Args)
 	case "GET":
-		return c.handleGet(command.Args)
+		result, err = c.handleGet(command.Args)
 	case "DEL":
-		return c.handleDel(command.Args)
+		result, err = c.handleDel(command.Args)
 	default:
-		return "", errors.New("unknown command")
+		err = errors.New("unknown command")
 	}
+
+	if err != nil {
+		atomic.AddUint64(&c.metrics.FailedQueries, 1)
+	} else {
+		atomic.AddUint64(&c.metrics.SuccessQueries, 1)
+	}
+
+	duration := time.Since(start)
+	atomic.StoreInt64((*int64)(&c.metrics.AverageLatency), int64((c.metrics.AverageLatency*time.Duration(c.metrics.TotalQueries-1)+duration)/time.Duration(c.metrics.TotalQueries)))
+
+	return result, err
+}
+
+func (c *computeLayer) GetMetrics() Metrics {
+	return c.metrics
 }
 
 func (c *computeLayer) handleSet(args []string) (string, error) {
